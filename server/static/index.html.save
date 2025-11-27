@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>CyberStalk · 实时状态</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at top, #7dd3fc 0, #0f172a 55%, #020617 100%);
+      --card-bg: rgba(15, 23, 42, 0.72);
+      --card-border: rgba(148, 163, 184, 0.35);
+      --text-main: #e5e7eb;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --danger-soft: rgba(248, 113, 113, 0.14);
+      --warn-soft: rgba(234, 179, 8, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 1120px;
+      border-radius: 28px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(248, 250, 252, 0.45), rgba(148, 163, 184, 0.2));
+      box-shadow:
+        0 40px 120px rgba(15, 23, 42, 0.85),
+        0 0 0 1px rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(26px);
+    }
+
+    .inner {
+      background: radial-gradient(circle at top left, rgba(248, 250, 252, 0.08), rgba(15, 23, 42, 0.95));
+      border-radius: 27px;
+      padding: 20px 20px 24px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .status-chip-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      justify-content: flex-end;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.2);
+    }
+
+    .status-chip {
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+      gap: 16px;
+    }
+
+    .layout-main {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .layout-side {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      box-shadow:
+        0 20px 45px rgba(15, 23, 42, 0.65),
+        0 0 0 1px rgba(15, 23, 42, 0.8);
+      padding: 14px 16px 16px;
+      backdrop-filter: blur(22px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at top, rgba(148, 163, 184, 0.15), transparent 55%);
+      opacity: 0.75;
+    }
+
+    .card-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-title span.icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .status-badge, .error-badge, .warn-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+      gap: 4px;
+    }
+
+    .status-badge {
+      background: var(--accent-soft);
+      color: #7dd3fc;
+      border-color: rgba(56, 189, 248, 0.65);
+    }
+    .error-badge {
+      background: var(--danger-soft);
+      color: #fecaca;
+      border-color: rgba(248, 113, 113, 0.7);
+    }
+    .warn-badge {
+      background: var(--warn-soft);
+      color: #fde68a;
+      border-color: rgba(234, 179, 8, 0.7);
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    .hr-value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .hr-value {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .hr-unit {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .timestamp {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .small {
+      font-size: 11px;
+    }
+
+    #hr-chart {
+      margin-top: 10px;
+    }
+
+    .muted {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .active-app {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 2px;
+      margin-bottom: 4px;
+    }
+
+    .window-title {
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+
+    th, td {
+      padding: 6px 4px;
+      text-align: left;
+      border-bottom: 1px solid rgba(30, 64, 175, 0.45);
+    }
+
+    th {
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    tr:hover td {
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    .pid-col {
+      width: 60px;
+    }
+
+    .proc-col {
+      width: 170px;
+    }
+
+    .footer {
+      margin-top: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      opacity: 0.85;
+    }
+
+    .footer a {
+      color: #7dd3fc;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        border-radius: 0;
+        box-shadow: none;
+        max-width: 100%;
+      }
+      .inner {
+        border-radius: 0;
+        padding: 16px 10px 18px;
+      }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="inner">
+    <div class="top-bar">
+      <div class="title-block">
+        <h1>
+          <span>CyberStalk</span>
+          <span class="title-pill">Live Status</span>
+        </h1>
+        <div class="subtitle">
+          实时展示我的个人情况
+        </div>
+      </div>
+      <div class="status-chip-row">
+        <div class="status-dot"></div>
+        <div class="status-chip">Connected · cyberstalk.online</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- 左侧：心率 & 活动窗口 -->
+      <div class="layout-main">
+        <!-- 心率卡片 -->
+        <div class="card">
+          <div class="card-inner">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  <span class="icon">❤️</span>
+                  <span>当前心率</span>
+                </div>
+                <div class="card-subtitle small">
+                  来自 Apple Watch
+                </div>
+              </div>
+              <span id="hr-status-badge" class="status-badge">
+                <span class="badge-dot"></span> 等待数据
+              </span>
+            </div>
+
+            <div class="hr-value-row">
+              <div class="hr-value" id="hr-value">--</div>
+              <div class="hr-unit">bpm</div>
+            </div>
+            <div id="hr-time" class="timestamp"></div>
+            <div id="hr-hint" class="muted small" style="margin-top: 4px;">
+              心率每隔一段时间更新，若长时间未更新可能我已经死了
+            </div>
+            <canvas id="hr-chart" height="150"></canvas>
+          </div>
+        </div>
+
+        <!-- 当前活动窗口 -->
+        <div class="card">
+          <div class="card-inner">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  <span class="icon">💻</span>
+                  <span>当前活动窗口</span>
+                </div>
+                <div class="card-subtitle small">
+                  来自 Windows
+                </div>
+              </div>
+              <span id="status-badge" class="status-badge">
+                <span class="badge-dot"></span> 等待数据
+              </span>
+            </div>
+
+            <div id="active-app" class="active-app">暂无数据</div>
+            <div id="active-title" class="window-title"></div>
+            <div id="timestamp" class="timestamp"></div>
+          </div>
+        </div>
+          <div class="card">
+    <div class="card-inner">
+    <div class="card-header">
+      <div>
+        <div class="card-title">
+          <span class="icon">📱</span>
+          <span>我的手机使用情况</span>
+        </div>
+        <div class="card-subtitle small">来自 iPhone </div>
+      </div>
+      <span id="phone-badge" class="status-badge">
+        <span class="badge-dot"></span> 等待数据
+      </span>
+    </div>
+    <div class="active-app"> 型号: Iphone 15</div>
+    <div class="active-app">网络连接: 中国电信5G</div>
+    <div class="active-app" id="phone-lock">锁定状态：--</div>
+    <div class="active-app" id="phone-battery">电池电量：--%</div>
+    <div class="active-app" id="phone-app">当前应用：--</div>
+
+    <div id="phone-time" class="timestamp"></div>
+  </div>
+</div>
+      </div>
+      <!-- 右侧：打开的软件列表 -->
+      <div class="layout-side">
+        <div class="card">
+          <div class="card-inner">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  <span class="icon">🧩</span>
+                  <span>当前打开的软件</span>
+                </div>
+                <div class="card-subtitle small">
+                  仅统计有可见窗口的应用 · 每 30 秒刷新。
+                </div>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+              <tr>
+                <th class="pid-col">PID</th>
+                <th class="proc-col">进程</th>
+                <th>窗口标题</th>
+              </tr>
+              </thead>
+              <tbody id="apps-body">
+              <tr><td colspan="3" class="muted">暂无数据</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>数据源：电脑 & Apple Watch & Iphone</div>
+      <div><a href="https://cyberstalk.online" target="_blank">cyberstalk.online</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const STALE_MINUTES = 10;      // 程序状态超时
+  const HR_STALE_MINUTES = 10;   // 心率超时
+
+  function utcToLocalString(utcStr) {
+    if (!utcStr) return "";
+    const d = new Date(utcStr.replace(" ", "T") + "Z");
+    if (isNaN(d.getTime())) {
+      return utcStr;
+    }
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    const ss = String(d.getSeconds()).padStart(2, "0");
+    return `${y}-${m}-${day} ${hh}:${mm}:${ss}`;
+  }
+
+  function formatElapsed(minutes) {
+    const totalMinutes = Math.max(0, Math.round(minutes));
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+
+    if (hours === 0 && mins === 0) return "刚刚";
+    if (hours === 0) return `${mins} 分钟`;
+    if (mins === 0) return `${hours} 小时`;
+    return `${hours} 小时 ${mins} 分钟`;
+  }
+
+  // ---------------- 心率相关 ----------------
+  let hrChart = null;
+
+  async function fetchHeartRate() {
+    const badge = document.getElementById("hr-status-badge");
+    const valueEl = document.getElementById("hr-value");
+    const timeEl = document.getElementById("hr-time");
+
+    try {
+      const res = await fetch("/api/latest_heartrate");
+      const data = await res.json();
+      console.log("latest heartrate:", data);
+
+      if (data.status === "no data") {
+        badge.textContent = "等待数据";
+        badge.className = "status-badge";
+        valueEl.innerText = "--";
+        timeEl.innerText = "";
+        return;
+      }
+
+      const tsText = data.timestamp;
+      const rate = data.rate;
+
+      let isStale = false;
+      let elapsedMinutes = 0;
+      if (tsText) {
+        const parsedUtc = new Date(tsText.replace(" ", "T") + "Z");
+        if (!isNaN(parsedUtc.getTime())) {
+          const now = new Date();
+          elapsedMinutes = (now - parsedUtc) / 60000;
+          if (elapsedMinutes >= HR_STALE_MINUTES) {
+            isStale = true;
+          }
+        }
+      }
+
+      const localTimeStr = utcToLocalString(tsText);
+
+      valueEl.innerText = rate;
+      if (isStale) {
+        badge.textContent = "心率数据已过期";
+        badge.className = "warn-badge";
+        const elapsedText = formatElapsed(elapsedMinutes);
+        timeEl.innerText =
+          `距离上次心率上报已经过去约 ${elapsedText}（最后心率时间：${localTimeStr}）`;
+      } else {
+        badge.textContent = "正常";
+        badge.className = "status-badge";
+        timeEl.innerText = `最近一次心率时间：${localTimeStr}`;
+      }
+
+    } catch (e) {
+      console.error("fetchHeartRate error:", e);
+      badge.textContent = "错误";
+      badge.className = "error-badge";
+      valueEl.innerText = "--";
+      timeEl.innerText = "无法获取心率数据";
+    }
+  }
+
+  async function fetchHeartRateHistory() {
+    const canvas = document.getElementById("hr-chart");
+    const ctx = canvas.getContext("2d");
+
+    try {
+      const res = await fetch("/api/heartrate_history");
+      const data = await res.json();
+      console.log("heartrate history:", data);
+
+      const points = data.points || [];
+      if (!points.length) {
+        return;
+      }
+
+      const labels = points.map(p => {
+        const d = new Date(p.timestamp.replace(" ", "T") + "Z");
+        if (isNaN(d.getTime())) return p.timestamp;
+        return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+      });
+
+      const values = points.map(p => p.rate);
+
+      if (!hrChart) {
+        hrChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "心率 (bpm)",
+              data: values,
+              tension: 0.35,
+              fill: false
+            }]
+          },
+          options: {
+            plugins: {
+              legend: {
+                labels: { color: "#e5e7eb" }
+              }
+            },
+            scales: {
+              x: {
+                ticks: { color: "#9ca3af" },
+                grid: { color: "rgba(30,64,175,0.5)" }
+              },
+              y: {
+                ticks: { color: "#9ca3af" },
+                grid: { color: "rgba(30,64,175,0.5)" }
+              }
+            }
+          }
+        });
+      } else {
+        hrChart.data.labels = labels;
+        hrChart.data.datasets[0].data = values;
+        hrChart.update();
+      }
+
+    } catch (e) {
+      console.error("fetchHeartRateHistory error:", e);
+    }
+  }
+
+  // ---------------- 程序状态相关 ----------------
+  async function fetchStatus() {
+    const statusBadge = document.getElementById("status-badge");
+    const activeAppEl = document.getElementById("active-app");
+    const activeTitleEl = document.getElementById("active-title");
+    const timestampEl = document.getElementById("timestamp");
+    const appsBody = document.getElementById("apps-body");
+
+    try {
+      const res = await fetch("/api/current");
+      const data = await res.json();
+
+      console.log("data from /api/current:", data);
+
+      if (data.status === "no data yet") {
+        activeAppEl.innerText = "暂时还没有上报数据";
+        activeTitleEl.innerText = "";
+        timestampEl.innerText = "";
+        appsBody.innerHTML =
+          '<tr><td colspan="3" class="muted">等待客户端上报...</td></tr>';
+        statusBadge.textContent = "等待上报";
+        statusBadge.className = "status-badge";
+        return;
+      }
+
+      const tsText = data.timestamp || "";
+      const active = data.active || {};
+      const apps = data.apps || [];
+
+      let isStale = false;
+      let elapsedMinutes = 0;
+      if (tsText) {
+        const parsedUtc = new Date(tsText.replace(" ", "T") + "Z");
+        if (!isNaN(parsedUtc.getTime())) {
+          const now = new Date();
+          elapsedMinutes = (now - parsedUtc) / 60000;
+          if (elapsedMinutes >= STALE_MINUTES) {
+            isStale = true;
+          }
+        }
+      }
+
+      const localTimeStr = tsText ? utcToLocalString(tsText) : "";
+
+      if (isStale) {
+        const elapsedText = formatElapsed(elapsedMinutes);
+
+        activeAppEl.innerText = "客户端已离线";
+        activeTitleEl.innerText = "";
+        timestampEl.innerText =
+          `距离上次更新已经过去约 ${elapsedText}（最后更新时间：${localTimeStr}）`;
+
+        statusBadge.textContent = "离线";
+        statusBadge.className = "error-badge";
+
+        appsBody.innerHTML = `
+          <tr>
+            <td colspan="3" class="muted">
+              客户端已离线，最近一次上报时间：${localTimeStr}
+            </td>
+          </tr>
+          <tr>
+            <td colspan="3" class="muted">
+              请检查本地脚本是否仍在运行。
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      // 在线
+      activeAppEl.innerText = active.process_name || "未知程序";
+      activeTitleEl.innerText = active.window_title || "";
+      timestampEl.innerText = localTimeStr
+        ? ("最后上报时间：" + localTimeStr)
+        : "";
+
+      statusBadge.textContent = "在线";
+      statusBadge.className = "status-badge";
+
+      if (!apps.length) {
+        appsBody.innerHTML =
+          '<tr><td colspan="3" class="muted">当前没有检测到有可见窗口的应用</td></tr>';
+        return;
+      }
+
+      appsBody.innerHTML = "";
+      apps.forEach(app => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="pid-col">${app.pid ?? ""}</td>
+          <td class="proc-col">${app.process_name ?? ""}</td>
+          <td>${app.window_title ?? ""}</td>
+        `;
+        appsBody.appendChild(tr);
+      });
+
+    } catch (e) {
+      console.error("fetchStatus error:", e);
+      statusBadge.textContent = "错误";
+      statusBadge.className = "error-badge";
+      activeAppEl.innerText = "无法获取数据";
+      activeTitleEl.innerText = "";
+      timestampEl.innerText = "";
+      appsBody.innerHTML =
+        '<tr><td colspan="3" class="muted">请求 /api/current 失败，请检查服务器或网络</td></tr>';
+    }
+  }
+
+  // 定时刷新
+  fetchStatus();
+  fetchHeartRate();
+  fetchHeartRateHistory();
+  setInterval(fetchStatus, 5000);
+  setInterval(fetchHeartRate, 15000);
+  setInterval(fetchHeartRateHistory, 60000);
+</script>
+
+</body>
+</html>

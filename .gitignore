@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.log
+
+server/config.py
+client_windows/config.py
+
+venv/
+.env/
