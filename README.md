@@ -3,7 +3,7 @@
 **轻量级的「我现在在干什么」实时活动展示系统**
 
 包含 Windows 客户端 + Flask 后端 + MySQL + Web 页面
-支持扩展 iPhone / Apple Watch 数据上报
+支持扩展 iPhone / Apple Watch 数据上传
 
 ## ✨ 功能简介
 
@@ -27,8 +27,8 @@
 
 ### 可选扩展
 
-- iPhone：锁定状态、电量、当前 App
-- Apple Watch：心率数据
+- iPhone：锁定状态、电量、当前 App等   苹果快捷指令里可以获取的数据都能发，自己根据内容去SQL加个新表即可
+- Apple Watch：心率数据等  健康数据里的都可以自己填，自己去SQL加个新表即可
 
 ## 📦 安装与部署（快速）
 
