@@ -32,6 +32,12 @@
 
 ## 📦 安装与部署（快速）
 
+下面以最常见的「一台服务器 + 一台 Windows 客户端」为例。
+.克隆项目
+```bash
+git clone https://github.com/Pamperkyumi/cyberstalk-win-monitor.git
+cd cyberstalk-win-monitor
+```
 ### 1️⃣ 初始化数据库
 
 ```bash
