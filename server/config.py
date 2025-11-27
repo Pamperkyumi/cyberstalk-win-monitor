@@ -1,5 +1,4 @@
-# config.example.py
-# 复制为 config.py 后，填上你自己的实际配置
+# 填上你自己的实际配置
 
 DB_CONFIG = {
     "host": "127.0.0.1",
