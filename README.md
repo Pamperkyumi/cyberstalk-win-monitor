@@ -142,3 +142,5 @@ sql/              # 数据库结构（schema.sql）
 ## 📜 LICENSE
 
 MIT License – 可自由修改、使用、商用。
+
+![Example](image.png)
